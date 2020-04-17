@@ -1156,11 +1156,11 @@ describe "Resque::Worker" do
   end
 
   it "no reconnects to redis when not forking" do
-    original_connection = Resque.redis._client.connection.instance_variable_get("@sock")
+    original_connection = Resque.redis._client.connection_info
     without_forking do
       @worker.work(0)
     end
-    assert_equal original_connection, Resque.redis._client.connection.instance_variable_get("@sock")
+    assert_equal original_connection, Resque.redis._client.connection_info
   end
 
   it "logs errors with the correct logging level" do
@@ -1233,15 +1233,15 @@ describe "Resque::Worker" do
     end
 
     it "reconnects to redis after fork" do
-      original_connection = Resque.redis._client.connection.instance_variable_get("@sock").object_id
+      original_connection = Resque.redis.connection.object_id
       new_connection = run_in_job do
-        Resque.redis._client.connection.instance_variable_get("@sock").object_id
+        Resque.redis.connection.object_id
       end
       refute_equal original_connection, new_connection
     end
 
     it "tries to reconnect three times before giving up and the failure does not unregister the parent" do
-      @worker.redis._client.stubs(:reconnect).raises(Redis::BaseConnectionError)
+      @worker.redis._client.stubs(:disconnect).raises(Redis::BaseConnectionError)
       @worker.stubs(:sleep)
 
       Resque.logger = DummyLogger.new
@@ -1255,7 +1255,7 @@ describe "Resque::Worker" do
     end
 
     it "tries to reconnect three times before giving up" do
-      @worker.redis._client.stubs(:reconnect).raises(Redis::BaseConnectionError)
+      @worker.redis._client.stubs(:disconnect).raises(Redis::BaseConnectionError)
       @worker.stubs(:sleep)
 
       Resque.logger = DummyLogger.new

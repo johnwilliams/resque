@@ -582,10 +582,8 @@ module Resque
   def queue_sizes
     queue_names = queues
 
-    sizes = redis.pipelined do
-      queue_names.each do |name|
-        redis.llen("queue:#{name}")
-      end
+    sizes = queue_names.map do |name|
+      redis.llen("queue:#{name}")
     end
 
     Hash[queue_names.zip(sizes)]
@@ -594,13 +592,12 @@ module Resque
   # Returns a hash, mapping queue names to (up to `sample_size`) samples of jobs in that queue
   def sample_queues(sample_size = 1000)
     queue_names = queues
-
-    samples = redis.pipelined do
-      queue_names.each do |name|
-        key = "queue:#{name}"
-        redis.llen(key)
-        redis.lrange(key, 0, sample_size - 1)
-      end
+    
+    samples = []
+    queue_names.each do |name|
+      key = "queue:#{name}"
+      samples << redis.llen(key)
+      samples << redis.lrange(key, 0, sample_size - 1)
     end
 
     hash = {}

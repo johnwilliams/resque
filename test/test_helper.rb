@@ -69,6 +69,10 @@ if ENV.key? 'RESQUE_DISTRIBUTED'
   `redis-server #{$dir}/redis-test-cluster.conf`
   r = Redis::Distributed.new(['redis://localhost:9736', 'redis://localhost:9737'])
   Resque.redis = Redis::Namespace.new :resque, :redis => r
+elsif ENV.key? 'RESQUE_CLUSTER'
+  require 'redis/cluster'
+  nodes = (7000..7005).map { |port| "redis://localhost:#{port}" }
+  Resque.redis = Redis.new(cluster: nodes)
 else
   puts "Starting redis for testing at localhost:9736..."
   `redis-server #{$dir}/redis-test.conf`

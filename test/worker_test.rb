@@ -1233,9 +1233,9 @@ describe "Resque::Worker" do
     end
 
     it "reconnects to redis after fork" do
-      original_connection = Resque.redis.connection.object_id
+      original_connection = Resque.redis._client.connection_info.object_id
       new_connection = run_in_job do
-        Resque.redis.connection.object_id
+        Resque.redis._client.connection_info.object_id
       end
       refute_equal original_connection, new_connection
     end
